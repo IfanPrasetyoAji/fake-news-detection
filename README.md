@@ -8,6 +8,12 @@ Proyek ini menerima teks berita melalui endpoint REST dan mengembalikan prediksi
 
 ## Usage
 
+### Clone dan buka repository
+```bash
+git clone git@github.com:IfanPrasetyoAji/fake-news-detection.git
+cd fake-news-detection
+```
+
 ### Menjalankan dengan Python
 
 ```bash
