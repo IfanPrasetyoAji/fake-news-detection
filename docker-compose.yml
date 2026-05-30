@@ -1,0 +1,7 @@
+services:
+  web:
+    build: .
+    container_name: fake-news-prediction
+    ports: 
+      - '5000:5000'
+        

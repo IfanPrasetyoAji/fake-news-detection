@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fake News Detector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --surface: #ffffff;
+      --surface2: #f6f6f9;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-hover: rgba(0, 0, 0, 0.16);
+      --text: #1a1a1e;
+      --text-muted: #66666e;
+      --text-dim: #9999a3;
+      --fake: #d32f2f;
+      --fake-bg: rgba(211, 47, 47, 0.05);
+      --fake-border: rgba(211, 47, 47, 0.15);
+      --real: #2e7d32;
+      --real-bg: rgba(46, 125, 50, 0.05);
+      --real-border: rgba(46, 125, 50, 0.15);
+      --accent: #8e792e;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid rgba(142, 121, 46, 0.25);
+      padding: 4px 12px;
+      border-radius: 99px;
+      margin-bottom: 1.2rem;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+
+    h1 span { color: var(--accent); }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 420px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 680px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .label {
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .api-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      resize: none;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      border-color: var(--border-hover);
+    }
+
+    textarea {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      line-height: 1.7;
+      min-height: 140px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    button {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 9px 16px;
+      transition: all 0.15s;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-muted);
+    }
+
+    button:hover { border-color: var(--border-hover); color: var(--text); }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: transparent;
+      font-weight: 700;
+      padding: 9px 24px;
+    }
+ 
+    .btn-primary:hover { background: #766425; color: #ffffff; }
+
+    .btn-clear {
+      margin-left: auto;
+      padding: 9px 12px;
+    }
+
+    .health-status {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      margin-top: 6px;
+      min-height: 16px;
+      color: var(--text-dim);
+    }
+
+    .health-status.ok { color: var(--real); }
+    .health-status.err { color: var(--fake); }
+
+    /* Result card */
+    .result-card {
+      width: 100%;
+      max-width: 680px;
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-bottom: 1rem;
+      display: none;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .result-card.fake { border-color: var(--fake-border); background: var(--fake-bg); }
+    .result-card.real { border-color: var(--real-border); background: var(--real-bg); }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 1.25rem;
+    }
+
+    .result-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .result-card.fake .result-icon { background: var(--fake-bg); color: var(--fake); border: 1px solid var(--fake-border); }
+    .result-card.real .result-icon { background: var(--real-bg); color: var(--real); border: 1px solid var(--real-border); }
+
+    .result-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .result-card.fake .result-title { color: var(--fake); }
+    .result-card.real .result-title { color: var(--real); }
+
+    .result-sub { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+    .conf-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .conf-track {
+      height: 6px;
+      border-radius: 99px;
+      background: rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+
+    .conf-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .result-card.fake .conf-fill { background: var(--fake); }
+    .result-card.real .conf-fill { background: var(--real); }
+
+    .json-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    .json-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+
+    pre {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Error */
+    .error-box {
+      width: 100%;
+      max-width: 680px;
+      display: none;
+      background: rgba(224,82,82,0.08);
+      border: 1px solid var(--fake-border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--fake);
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 1rem;
+    }
+
+    /* Examples */
+    .examples {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .example-chip {
+      flex: 1;
+      font-size: 12px;
+      text-align: left;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      transition: all 0.15s;
+      line-height: 1.5;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.01);
+    }
+
+    .example-chip:hover { border-color: var(--border-hover); color: var(--text); }
+    .example-chip .chip-tag { display: block; font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px; }
+    .example-chip.fake-chip .chip-tag { color: var(--fake); }
+    .example-chip.real-chip .chip-tag { color: var(--real); }
+
+    /* Divider */
+    .divider {
+      width: 100%;
+      max-width: 680px;
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0.5rem 0 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge">ML · Fake News Detection</div>
+    <h1>Is this news <span>real?</span></h1>
+    <p class="subtitle">Paste any article or headline. The model will classify it as real or fake using a TF-IDF + Logistic Regression pipeline.</p>
+  </header>
+
+  <!-- API Config -->
+  <div class="card">
+    <p class="label">API endpoint</p>
+    <div class="api-row">
+      <input type="text" id="api-url" value="http://localhost:5000/predict" />
+      <button onclick="checkHealth()">Health check</button>
+    </div>
+    <p class="health-status" id="health-status"></p>
+  </div>
+
+  <!-- Examples -->
+  <div class="examples">
+    <button class="example-chip fake-chip" onclick="loadExample('fake')">
+      <span class="chip-tag">⚠ Fake example</span>
+      "Scientists confirm bleach cures all diseases. Government hiding the cure..."
+    </button>
+    <button class="example-chip real-chip" onclick="loadExample('real')">
+      <span class="chip-tag">✓ Real example</span>
+      "Federal Reserve raised interest rates by 0.25 percentage points on Wednesday..."
+    </button>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Input -->
+  <div class="card">
+    <p class="label">News text</p>
+    <textarea id="news-input" placeholder="Paste a news article or headline here..."></textarea>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="predict()" id="predict-btn">Analyze →</button>
+      <button onclick="clearAll()" class="btn-clear" title="Clear">✕ Clear</button>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-box" id="error-box"></div>
+
+  <!-- Result -->
+  <div class="result-card" id="result-card">
+    <div class="result-header">
+      <div class="result-icon" id="result-icon"></div>
+      <div>
+        <p class="result-title" id="result-title"></p>
+        <p class="result-sub" id="result-sub"></p>
+      </div>
+    </div>
+    <div class="conf-label-row">
+      <span>Confidence</span>
+      <span id="conf-pct"></span>
+    </div>
+    <div class="conf-track">
+      <div class="conf-fill" id="conf-fill" style="width:0%"></div>
+    </div>
+    <div class="json-block">
+      <p class="json-label">Raw JSON response</p>
+      <pre id="raw-json"></pre>
+    </div>
+  </div>
+
+  <script>
+    const fakeEx = "BREAKING: Scientists reveal that drinking bleach cures all known diseases. Government has been hiding this cure for 50 years. Big pharma doesn't want you to know this secret remedy discovered by a rogue doctor.";
+    const realEx = "The Federal Reserve raised interest rates by 0.25 percentage points on Wednesday, the tenth increase since March 2022, as policymakers continued their battle against inflation that remains well above the central bank's 2 percent target.";
+
+    function loadExample(type) {
+      document.getElementById('news-input').value = type === 'fake' ? fakeEx : realEx;
+      hideAll();
+    }
+
+    function clearAll() {
+      document.getElementById('news-input').value = '';
+      hideAll();
+    }
+
+    function hideAll() {
+      document.getElementById('result-card').style.display = 'none';
+      document.getElementById('error-box').style.display = 'none';
+    }
+
+    function showError(msg) {
+      const eb = document.getElementById('error-box');
+      eb.textContent = msg;
+      eb.style.display = 'block';
+      document.getElementById('result-card').style.display = 'none';
+    }
+
+    async function checkHealth() {
+      const base = document.getElementById('api-url').value.replace('/predict', '');
+      const el = document.getElementById('health-status');
+      el.className = 'health-status';
+      el.textContent = 'Checking...';
+      try {
+        const res = await fetch(base + '/health');
+        const data = await res.json();
+        el.className = 'health-status ok';
+        el.textContent = '✓ API is running — ' + JSON.stringify(data);
+      } catch(e) {
+        el.className = 'health-status err';
+        el.textContent = '✗ Cannot reach API. Make sure Flask is running.';
+      }
+    }
+
+    async function predict() {
+      const text = document.getElementById('news-input').value.trim();
+      if (!text) { showError('Please enter some news text first.'); return; }
+
+      const btn = document.getElementById('predict-btn');
+      btn.disabled = true;
+      btn.textContent = 'Analyzing...';
+      hideAll();
+
+      const url = document.getElementById('api-url').value;
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        const data = await res.json();
+
+        if (data.error) { showError('API error: ' + data.error); return; }
+
+        const isFake = data.prediction === 'FAKE';
+        const conf = Math.round((data.confidence || 0) * 100);
+
+        const card = document.getElementById('result-card');
+        card.className = 'result-card ' + (isFake ? 'fake' : 'real');
+
+        document.getElementById('result-icon').textContent = isFake ? '⚠' : '✓';
+        document.getElementById('result-title').textContent = isFake ? 'Fake News' : 'Real News';
+        document.getElementById('result-sub').textContent = 'Label ' + (data.label ?? '') + ' · predicted by fake_news_model.pkl';
+        document.getElementById('conf-pct').textContent = conf + '%';
+
+        const fill = document.getElementById('conf-fill');
+        fill.style.width = '0%';
+        setTimeout(() => { fill.style.width = conf + '%'; }, 50);
+
+        document.getElementById('raw-json').textContent = JSON.stringify(data, null, 2);
+        card.style.display = 'block';
+
+      } catch(e) {
+        showError('Could not connect to ' + url + '. Is Flask running? Also make sure flask-cors is installed and CORS(app) is added to app.py.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Analyze →';
+      }
+    }
+  </script>
+
+</body>
+</html>
