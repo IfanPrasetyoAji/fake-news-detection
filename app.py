@@ -19,14 +19,19 @@ Cara test via curl:
          -d '{"text": "Scientists confirm the earth is flat"}'
 """
 
+import os
 import re
 import nltk
 import joblib
+import sys
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 
+from pipeline.data_ingestion import * 
+from pipeline.preprocessing import * 
+from pipeline.model_training import *
 
 # ── App Initialization ────────────────────────────────────────────────────────
 
@@ -43,51 +48,28 @@ except LookupError:
     nltk.download('stopwords', quiet=True)
 
 
-# ── Model Loading ─────────────────────────────────────────────────────────────
+# ── Model Loading / Training ──────────────────────────────────────────────────
 
-# Load sklearn Pipeline (TF-IDF Vectorizer + Logistic Regression dalam 1 file)
-# Pipeline ini di-generate oleh src/model_training.py
-model_pipeline = joblib.load("model/fake_news_model.pkl")
+model_path = "model/model.pkl"
+if not os.path.exists(model_path):
+    print("Model tidak ditemukan. Melatih model baru...")
 
+    try:
+        raw_data = ingest_data("dataset")
+        preprocess_and_split_pipeline(raw_data, model_dir="model")
+        train_and_evaluate(model_dir="model")
 
-# ── Helper Functions ──────────────────────────────────────────────────────────
+        print(f"\n[SUCCESS] Automated Pipeline selesai! Cek folder 'model' untuk melihat hasilnya.")
 
-def preprocess_text(text: str) -> str:
-    """
-    Membersihkan dan memproses teks input sebelum dimasukkan ke model.
+    except FileNotFoundError as e:
+        print(f"\n[ERROR] Pipeline terhenti karena file tidak ditemukan: {str(e)}")
+        sys.exit(1)
 
-    Langkah preprocessing (harus identik dengan src/preprocessing.py):
-        1. Lowercase — menyamakan kapitalisasi
-        2. Remove non-alphabetic — buang angka, tanda baca, simbol
-        3. Tokenize — pisah jadi list kata
-        4. Remove stopwords — buang kata umum (the, is, at, ...)
-        5. Stemming — potong kata ke bentuk dasarnya (running → run)
+    except Exception as e:
+        print(f"\n[ERROR] Pipeline terhenti akibat kendala tak terduga: {str(e)}")
+        sys.exit(1)
 
-    Args:
-        text (str): Teks berita mentah dari user.
-
-    Returns:
-        str: Teks yang sudah bersih dan siap di-vectorize.
-    """
-    if not isinstance(text, str):
-        return ""
-
-    # Step 1 & 2: Lowercase + hapus karakter non-huruf
-    text = text.lower()
-    text = re.sub(r'[^a-zA-Z\s]', '', text)
-
-    # Step 3: Tokenize
-    words = text.split()
-
-    # Step 4: Hapus stopwords
-    stop_words = set(stopwords.words('english'))
-    words = [word for word in words if word not in stop_words]
-
-    # Step 5: Stemming
-    stemmer = PorterStemmer()
-    words = [stemmer.stem(word) for word in words]
-
-    return ' '.join(words)
+model_pipeline = joblib.load(model_path)
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────

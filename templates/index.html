@@ -212,15 +212,13 @@
     .result-card.real .result-icon { background: var(--real-bg); color: var(--real); border: 1px solid var(--real-border); }
 
     .result-title {
-      font-size: 22px;
+      font-size: 36px;
       font-weight: 700;
       letter-spacing: -0.02em;
     }
 
     .result-card.fake .result-title { color: var(--fake); }
     .result-card.real .result-title { color: var(--real); }
-
-    .result-sub { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
     .conf-label-row {
       display: flex;
@@ -377,7 +375,6 @@
       <div class="result-icon" id="result-icon"></div>
       <div>
         <p class="result-title" id="result-title"></p>
-        <p class="result-sub" id="result-sub"></p>
       </div>
     </div>
     <div class="conf-label-row">
@@ -464,7 +461,6 @@
 
         document.getElementById('result-icon').textContent = isFake ? '⚠' : '✓';
         document.getElementById('result-title').textContent = isFake ? 'Fake News' : 'Real News';
-        document.getElementById('result-sub').textContent = 'Label ' + (data.label ?? '') + ' · predicted by fake_news_model.pkl';
         document.getElementById('conf-pct').textContent = conf + '%';
 
         const fill = document.getElementById('conf-fill');
