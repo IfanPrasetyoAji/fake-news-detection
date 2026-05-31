@@ -11,8 +11,6 @@ Proyek ini adalah pipeline **training + inference** untuk mendeteksi berita pals
 
 Jika model `.pkl` belum tersedia, aplikasi akan secara otomatis menjalankan pipeline dari awal: **ingest data → preprocessing → train → evaluate → save model**, lalu memulai server.
 
-Anda dapat menggunakan *custom dataset* sendiri — cukup tempatkan file `Fake.csv` dan `True.csv` di folder `dataset/` dengan format yang sama (kolom `title`, `text`, `subject`, `date`). Pipeline akan melatih ulang model dari dataset tersebut saat aplikasi dijalankan.
-
 ## Custom Dataset
 
 Anda dapat melatih model dengan dataset sendiri. Pipeline akan otomatis mendeteksi dan melatih ulang model saat aplikasi dijalankan.
@@ -66,7 +64,7 @@ python app.py
 docker compose up
 ```
 
-Setelah server berjalan, buka **http://localhost:5000** untuk mengakses antarmuka web.
+Setelah server berjalan, buka **http://localhost:5000** untuk mengakses web interface.
 
 ## API Endpoints
 
